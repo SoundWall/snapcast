@@ -37,6 +37,7 @@ AlsaPlayer::AlsaPlayer(const PcmDevice& pcmDevice, std::shared_ptr<Stream> strea
 
 void AlsaPlayer::initAlsa()
 {
+    ofstream statefile;
 	unsigned int tmp, rate;
 	int pcm, channels;
 	snd_pcm_hw_params_t *params;
@@ -157,11 +158,15 @@ void AlsaPlayer::initAlsa()
 	snd_pcm_sw_params_set_start_threshold(handle_, swparams, frames_);
 //	snd_pcm_sw_params_set_stop_threshold(pcm_handle, swparams, frames_);
 	snd_pcm_sw_params(handle_, swparams);
+    statefile.open( SNAP_STATE_FILE );
+    statefile << "play";
+    statefile.close();
 }
 
 
 void AlsaPlayer::uninitAlsa()
 {
+    ofstream statefile;
 	if (handle_ != NULL)
 	{
 		snd_pcm_drain(handle_);
@@ -174,6 +179,9 @@ void AlsaPlayer::uninitAlsa()
 		free(buff_);
 		buff_ = NULL;
 	}
+    statefile.open( SNAP_STATE_FILE );
+    statefile << "stop";
+    statefile.close();
 }
 
 
@@ -202,7 +210,6 @@ void AlsaPlayer::worker()
 	snd_pcm_sframes_t pcm;
 	snd_pcm_sframes_t framesDelay;
 	long lastChunkTick = chronos::getTickCount();
-    ofstream statefile;
 
 	while (active_)
 	{
@@ -223,9 +230,6 @@ void AlsaPlayer::worker()
 		snd_pcm_delay(handle_, &framesDelay);
 		chronos::usec delay((chronos::usec::rep) (1000 * (double) framesDelay / stream_->getFormat().msRate()));
 //		logO << "delay: " << framesDelay << ", delay[ms]: " << delay.count() / 1000 << "\n";
-        statefile.open( SNAP_STATE_FILE );
-        statefile << "play";
-        statefile.close();
 		if (stream_->getPlayerChunk(buff_, delay, frames_))
 		{
 			lastChunkTick = chronos::getTickCount();
@@ -252,9 +256,6 @@ void AlsaPlayer::worker()
 					logO << "No chunk received for 5000ms. Closing ALSA.\n";
 					uninitAlsa();
 					stream_->clearChunks();
-                    statefile.open( SNAP_STATE_FILE );
-                    statefile << "stop";
-                    statefile.close();
 				}
 			}
 		}
