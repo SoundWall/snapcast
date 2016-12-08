@@ -20,9 +20,12 @@
 #include "common/log.h"
 #include "common/snapException.h"
 #include "common/strCompat.h"
+#include <iostream>
+#include <fstream>
 
 //#define BUFFER_TIME 120000
 #define PERIOD_TIME 30000
+#define SNAP_STATE_FILE "/soundwall/etc/snapclient.state"
 
 using namespace std;
 
@@ -199,6 +202,7 @@ void AlsaPlayer::worker()
 	snd_pcm_sframes_t pcm;
 	snd_pcm_sframes_t framesDelay;
 	long lastChunkTick = chronos::getTickCount();
+    ofstream statefile;
 
 	while (active_)
 	{
@@ -219,7 +223,9 @@ void AlsaPlayer::worker()
 		snd_pcm_delay(handle_, &framesDelay);
 		chronos::usec delay((chronos::usec::rep) (1000 * (double) framesDelay / stream_->getFormat().msRate()));
 //		logO << "delay: " << framesDelay << ", delay[ms]: " << delay.count() / 1000 << "\n";
-
+        statefile.open( SNAP_STATE_FILE );
+        statefile << "play";
+        statefile.close();
 		if (stream_->getPlayerChunk(buff_, delay, frames_))
 		{
 			lastChunkTick = chronos::getTickCount();
@@ -246,6 +252,9 @@ void AlsaPlayer::worker()
 					logO << "No chunk received for 5000ms. Closing ALSA.\n";
 					uninitAlsa();
 					stream_->clearChunks();
+                    statefile.open( SNAP_STATE_FILE );
+                    statefile << "stop";
+                    statefile.close();
 				}
 			}
 		}
