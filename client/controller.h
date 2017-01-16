@@ -60,6 +60,8 @@ public:
 private:
 	void worker();
 	bool sendTimeSyncMessage(long after = 1000);
+	size_t instance_;
+    int except_count;
 	std::atomic<bool> active_;
 	std::thread controllerThread_;
 	SampleFormat sampleFormat_;

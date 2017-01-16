@@ -72,7 +72,7 @@ void ClientConnection::start()
 	tcp::resolver resolver(io_service_);
 	tcp::resolver::query query(tcp::v4(), host_, cpt::to_string(port_), asio::ip::resolver_query_base::numeric_service);
 	auto iterator = resolver.resolve(query);
-	logO << "Connecting\n";
+	logD << "Connecting\n";
 	socket_.reset(new tcp::socket(io_service_));
 //	struct timeval tv;
 //	tv.tv_sec  = 5;
@@ -98,9 +98,9 @@ void ClientConnection::stop()
 		if (socket_)
 		{
 			socket_->shutdown(asio::ip::tcp::socket::shutdown_both, ec);
-			if (ec) logE << "Error in socket shutdown: " << ec.message() << endl;
+			if (ec) logD << "Error in socket shutdown: " << ec.message() << endl;
 			socket_->close(ec);
-			if (ec) logE << "Error in socket close: " << ec.message() << endl;
+			if (ec) logD << "Error in socket close: " << ec.message() << endl;
 		}
 		if (readerThread_)
 		{
