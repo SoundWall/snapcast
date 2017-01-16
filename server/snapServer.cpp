@@ -67,7 +67,7 @@ int main(int argc, char* argv[])
 		Value<int> bufferValue("b", "buffer", "Buffer [ms]", settings.bufferMs, &settings.bufferMs);
 		Implicit<int> daemonOption("d", "daemon", "Daemonize\noptional process priority [-20..19]", 0, &processPriority);
         
-        Value<string> loglevelValue("l", "log", "The level at which to log, default to warn [info, debug, warn, error]", settings.logLevel, &settings.logLevel);
+        Value<string> loglevelValue("L", "Log", "The level at which to log, default to warn [info, debug, warn, error]", settings.logLevel, &settings.logLevel);
 
 		OptionParser op("Allowed options");
 		op.add(helpSwitch)
