@@ -76,6 +76,7 @@ int main (int argc, char **argv)
 		size_t port(1704);
 		int latency(0);
 		int processPriority(-3);
+        string logLevel("warn");
 
 		Switch helpSwitch("", "help", "produce help message");
 		Switch versionSwitch("v", "version", "show version number");
@@ -85,7 +86,8 @@ int main (int argc, char **argv)
 		Value<string> soundcardValue("s", "soundcard", "index or name of the soundcard", "default", &soundcard);
 		Implicit<int> daemonOption("d", "daemon", "daemonize, optional process priority [-20..19]", -3, &processPriority);
 		Value<int> latencyValue("", "latency", "latency of the soundcard", 0, &latency);
-
+        Value<string> loglevelValue("L", "Log", "The level at which to log, default to warn [info, debug, warn, error]", logLevel, &logLevel);
+        
 		OptionParser op("Allowed options");
 		op.add(helpSwitch)
 		 .add(versionSwitch)
@@ -98,7 +100,8 @@ int main (int argc, char **argv)
 #ifdef HAS_DAEMON
 		 .add(daemonOption)
 #endif
-		 .add(latencyValue);
+		 .add(latencyValue)
+         .add(loglevelValue);
 
 		try
 		{
@@ -140,8 +143,34 @@ int main (int argc, char **argv)
 			cout << op << "\n";
 			exit(EXIT_SUCCESS);
 		}
+        
+		if (!loglevelValue.isSet())
+		{
+			logLevel = "warn";
+		}
 
-		std::clog.rdbuf(new Log("snapclient", LOG_WARNING));
+        int logPriority;
+        
+    	if (logLevel == "debug")
+    	{
+    		logPriority = LOG_DEBUG;
+        }
+        else if (logLevel == "info")
+        {
+            logPriority = LOG_INFO;
+        }
+        else if (logLevel == "error")
+        {
+            logPriority = LOG_ERR;
+        }
+        else
+        {
+            logPriority = LOG_WARNING;
+        }
+
+		std::clog.rdbuf(new Log("snapclient", logPriority));
+        
+        logS(kLogErr) << "Setting logging to: " << logLevel << "\n";
 
 		signal(SIGHUP, signal_handler);
 		signal(SIGTERM, signal_handler);

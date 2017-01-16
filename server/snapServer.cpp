@@ -66,6 +66,8 @@ int main(int argc, char* argv[])
 
 		Value<int> bufferValue("b", "buffer", "Buffer [ms]", settings.bufferMs, &settings.bufferMs);
 		Implicit<int> daemonOption("d", "daemon", "Daemonize\noptional process priority [-20..19]", 0, &processPriority);
+        
+        Value<string> loglevelValue("l", "log", "The level at which to log, default to warn [info, debug, warn, error]", settings.logLevel, &settings.logLevel);
 
 		OptionParser op("Allowed options");
 		op.add(helpSwitch)
@@ -77,7 +79,8 @@ int main(int argc, char* argv[])
 		 .add(codecValue)
 		 .add(streamBufferValue)
 		 .add(bufferValue)
-		 .add(daemonOption);
+		 .add(daemonOption)
+         .add(loglevelValue);
 
 		try
 		{
@@ -106,6 +109,11 @@ int main(int argc, char* argv[])
 			cout << op << "\n";
 			exit(EXIT_SUCCESS);
 		}
+        
+		if (!loglevelValue.isSet())
+		{
+			settings.logLevel = "warn";
+		}
 
 		if (!streamValue.isSet())
 			settings.pcmStreams.push_back(streamValue.getValue());
@@ -130,7 +138,29 @@ int main(int argc, char* argv[])
 		}
 
 		Config::instance();
-		std::clog.rdbuf(new Log("snapserver", LOG_WARNING));
+        
+        int logPriority;
+        
+    	if (settings.logLevel == "debug")
+    	{
+    		logPriority = LOG_DEBUG;
+        }
+        else if (settings.logLevel == "info")
+        {
+            logPriority = LOG_INFO;
+        }
+        else if (settings.logLevel == "error")
+        {
+            logPriority = LOG_ERR;
+        }
+        else
+        {
+            logPriority = LOG_WARNING;
+        }
+        
+		std::clog.rdbuf(new Log("snapserver", logPriority));
+        
+        logS(kLogErr) << "Setting logging to: " << settings.logLevel << "\n";
 
 		signal(SIGHUP, signal_handler);
 		signal(SIGTERM, signal_handler);
