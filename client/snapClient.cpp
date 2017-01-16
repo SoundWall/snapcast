@@ -141,7 +141,7 @@ int main (int argc, char **argv)
 			exit(EXIT_SUCCESS);
 		}
 
-		std::clog.rdbuf(new Log("snapclient", LOG_DAEMON));
+		std::clog.rdbuf(new Log("snapclient", LOG_WARNING));
 
 		signal(SIGHUP, signal_handler);
 		signal(SIGTERM, signal_handler);

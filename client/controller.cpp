@@ -167,9 +167,11 @@ void Controller::stop()
 void Controller::worker()
 {
 	active_ = true;
+    except_count = 0;
 
 	while (active_)
 	{
+
 		try
 		{
 			clientConnection_->start();
@@ -187,6 +189,8 @@ void Controller::worker()
 					chronos::usleep(100);
 				}
 			}
+
+            except_count = 0;
 			logO << "diff to server [ms]: " << (float)TimeProvider::getInstance().getDiffToServer<chronos::usec>().count() / 1000.f << "\n";
 
 			while (active_)
@@ -204,14 +208,24 @@ void Controller::worker()
 		}
 		catch (const std::exception& e)
 		{
+            if (except_count < 8000) 
+            {
+                except_count += 200;
+            }
+            else if (except_count < 60000)
+            {
+                except_count += 1000;
+            }
 			asyncException_ = false;
-			logS(kLogErr) << "Exception in Controller::worker(): " << e.what() << endl;
-			clientConnection_->stop();
+            logS(kLogErr) << "Exception in Controller::worker(): " << e.what() << endl;
+            clientConnection_->stop();
 			player_.reset();
 			stream_.reset();
 			decoder_.reset();
 			for (size_t n=0; (n<10) && active_; ++n)
 				chronos::sleep(100);
+            
+            chronos::sleep(except_count);
 		}
 	}
 	logD << "Thread stopped\n";
